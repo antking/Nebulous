@@ -244,13 +244,13 @@ Here is the canonical example of building an approximately circular patch by buf
 
 direct input::
 
-    >>> lineList =['H  1  6563A', 'H  1  4340A', 'HE 2  4686A', 'HE 1  5876A']
+     >>> lineList =['H  1  6563A', 'H  1  4340A', 'HE 2  4686A', 'HE 1  5876A']
      >>> lineFlux = [1.662,5.488,0.193,2.749]
      >>> lineFluxErr = [0.017,0.055,0.002,0.027]
 
 alternatively you can grab line fluxes from file (see *Reading Line Fluxes* for more detail)::
 
-    >>> import pandas as pd
+     >>> import pandas as pd
      >>> df = pd.read_csv(args.fileName,delimiter='\t')
      >>> linelabels = df.columns
      >>> flux={}
@@ -284,7 +284,7 @@ Expected input file for given example is a 3-row, n-column data file like ``Exam
 
 The output will look like::
 
-    H  1  6563A	H  1  4340A	HE 2  4686A	HE 1  5876A	H  1  4861A	H  1  1216A
+     H  1  6563A	H  1  4340A	HE 2  4686A	HE 1  5876A	H  1  4861A	H  1  1216A
      1.66196707692	5.48762461538	0.19259648	2.74931323077	11.2445938462	150.956923077
      0.0166196707692	0.0548762461538	0.0019259648	0.0274931323077	0.112445938462	1.50956923077
 
@@ -298,7 +298,7 @@ Reading Cloudy Tables
 
 Nebulous required input from Cloudy grid tables. Cloudy is a well-established and extensive spectral synthesis code designed to simulate realistic physical condition inside gas clouds (Ferland et al. 2013). An example Cloudy input file for such a grid is::
 
-   set save prefix "gridbasic_3solar_grain"
+    set save prefix "gridbasic_3solar_grain"
     table agn // built-in power law continuum
     phi(H) 20 vary
     grid 16 24 0.25
@@ -329,7 +329,7 @@ The emergent output looks like::
 
 to show the first 3 rows of the cloudy output file ``grid_3solar_turb.line``::
 
-   #lineslist	H  1  4340A	H  1  4861A	H  1  6563A	HE 1  4471A	HE 1  4922A	HE 1  5016A	HE 1      5876A	HE 1  6678A	HE 1  7065A	HE 2  1640A	HE 2  4686A	INWD  4686A	INCI  1215A	H  1  1216A	INWD  1216A	HE 2  1215A	TOTL  1218A	N  5  1239A	N  5  1243A	TOTL  1240A	S  2  1256A	SI 2  1263A	6LEV  1304A	SI 2  1308A	C  2  1335A	TOTL  1397A	TOTL  1402A	TOTL  1406A	C  4  1548A	C  4  1551A	TOTL  1549A	INWD  1549A	AL 3  1855A	AL 3  1863A	TOTL  1860A	INWD  1860A	TOTL  1888A	TOTL  1909A	SI 3  1883A	INWD  1892A	INWD  1910A	TOTL  2326A	MG 2  2796A	MG 2  2803A	TOTL  2798A	INWD  2798A	HE 2  3203A	HE 1  3889A	H  1  4102A	H  1  4340A	INWD  4340A	H  1  4861A	INWD  4861A	HE 1  5876A	INWD  5876A	INWD  6563A	FE 2  6200A	FE 2  4300A	FE 2  2400A	FE 2  1080A	FE 2  1500A	FE 2 1.150m	FE 2  2500A	FE 2  2300A	FE 2  8900A	FE 2  1216A	FE2C     0 	O  3  5007A
+    #lineslist	H  1  4340A	H  1  4861A	H  1  6563A	HE 1  4471A	HE 1  4922A	HE 1  5016A	HE 1      5876A	HE 1  6678A	HE 1  7065A	HE 2  1640A	HE 2  4686A	INWD  4686A	INCI  1215A	H  1  1216A	INWD  1216A	HE 2  1215A	TOTL  1218A	N  5  1239A	N  5  1243A	TOTL  1240A	S  2  1256A	SI 2  1263A	6LEV  1304A	SI 2  1308A	C  2  1335A	TOTL  1397A	TOTL  1402A	TOTL  1406A	C  4  1548A	C  4  1551A	TOTL  1549A	INWD  1549A	AL 3  1855A	AL 3  1863A	TOTL  1860A	INWD  1860A	TOTL  1888A	TOTL  1909A	SI 3  1883A	INWD  1892A	INWD  1910A	TOTL  2326A	MG 2  2796A	MG 2  2803A	TOTL  2798A	INWD  2798A	HE 2  3203A	HE 1  3889A	H  1  4102A	H  1  4340A	INWD  4340A	H  1  4861A	INWD  4861A	HE 1  5876A	INWD  5876A	INWD  6563A	FE 2  6200A	FE 2  4300A	FE 2  2400A	FE 2  1080A	FE 2  1500A	FE 2 1.150m	FE 2  2500A	FE 2  2300A	FE 2  8900A	FE 2  1216A	FE2C     0 	O  3  5007A
     iteration 5	2.1233e+01	4.4658e+01	1.2614e+02	1.3250e+00	3.4699e-01	6.4632e-01	4.0041e+00	1.0611e+00	1.6066e+00	6.6704e+01	5.8100e+00	2.9059e+00	1.2150e+03	1.6061e+03	1.5817e+03	2.1963e+01	7.2797e+00	3.2187e+01	1.7071e+01	4.9259e+01	1.9119e-02	1.0423e+00	5.4650e-02	2.2416e+00	5.2318e+01	1.7460e+02	1.3597e+01	4.9263e+00	2.8467e+02	1.4324e+02	4.2916e+02	0.0000e+00	1.8190e+01	9.2210e+00	2.7817e+01	2.7729e+01	2.7755e+01	1.6802e+02	1.0333e-01	2.7422e+01	1.6537e+02	3.7226e+00	1.5739e+02	8.0401e+01	2.3789e+02	2.2662e+02	2.8151e+00	4.8953e+00	1.2394e+01	2.1233e+01	1.0620e+01	4.4658e+01	2.2340e+01	4.0041e+00	2.0030e+00	6.3274e+01	3.9681e+00	1.5309e+01	1.7168e+02	5.9401e-03	1.7322e+00	5.9532e-01	4.9573e+00	2.7142e+00	1.4182e+00	1.7753e+01	0.0000e+00	1.0956e+02
     iteration 6	2.1363e+01	4.4941e+01	1.2752e+02	1.3350e+00	3.5305e-01	6.6727e-01	4.1420e+00	1.0986e+00	1.7103e+00	6.5608e+01	5.8529e+00	2.9278e+00	1.2150e+03	1.6509e+03	1.6189e+03	2.2589e+01	4.0481e+00	1.5299e+01	8.1166e+00	2.3417e+01	2.9789e-02	1.5639e+00	5.7413e-02	2.9067e+00	5.9416e+01	1.6887e+02	1.2904e+01	5.4416e+00	2.8251e+02	1.4237e+02	4.2576e+02	0.0000e+00	1.6984e+01	8.6245e+00	2.5864e+01	2.5765e+01	4.5016e+01	2.0032e+02	9.4780e-02	4.4455e+01	1.9571e+02	5.9949e+00	1.7685e+02	9.0079e+01	2.6703e+02	2.5491e+02	2.8474e+00	4.6293e+00	1.2462e+01	2.1363e+01	1.0686e+01	4.4941e+01	2.2484e+01	4.1420e+00	2.0730e+00	6.3950e+01	3.0451e+00	1.5792e+01	1.7687e+02	5.7149e-03	1.1684e+00	4.8156e-01	3.6227e+00	1.9809e+00	1.0297e+00	1.2753e+01	0.0000e+00	6.5673e+01
 
@@ -358,4 +358,4 @@ Citation
 
 You are welcome to use and modify Nebulous, however please acknowledge its use either as is or with modifications with a citation to,
 
-DOI: 10.5281/zenodo.1326245 
+DOI: 10.5281/zenodo.1326245
