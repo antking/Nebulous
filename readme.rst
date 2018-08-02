@@ -351,11 +351,11 @@ In this example the :math:`\log_{10}` phi(H) values are varied between 16 and 24
 Additional Information
 ========================
 
-Please refer to the Nebulous source code for all the modules and their arguments (the code is semi-well-documented). 
+Please refer to the Nebulous source code for all the modules and their arguments (the code is semi-well-documented).
 
 Citation
 =========
 
 You are welcome to use and modify Nebulous, however please acknowledge its use either as is or with modifications with a citation to,
 
-enter citation here.
+DOI: 10.5281/zenodo.1326245 
