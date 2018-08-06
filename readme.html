@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>Nebulous</title>
+  <style type="text/css">
+      code{white-space: pre-wrap;}
+      span.smallcaps{font-variant: small-caps;}
+      span.underline{text-decoration: underline;}
+      div.column{display: inline-block; vertical-align: top; width: 50%;}
+  </style>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.2/MathJax.js?config=TeX-AMS_CHTML-full" type="text/javascript"></script>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header>
+<h1 class="title">Nebulous</h1>
+</header>
+<h1 id="what-is-nebulous">What is Nebulous</h1>
+<p><strong>Nebulous</strong> is a reversible jump Markov Chain Monte Carlo that takes Cloudy (Ferland et al, 2013) outputs and fits line ratios to find the optimal <span class="math inline">\(\Phi\)</span> and <span class="math inline">\(n_H\)</span> parameter space the broad line region occupies under a similar assumption of the Locally Optimally Emitting Cloud (LOC) model (Baldwin et al., 1995). Cloudy is a well-established and extensive spectral synthesis code designed to simulate realistic physical condition inside gas clouds. It predicts the thermal, photoionisation, and chemical structure of a non-equilibrium cloud illuminated by an external source of radiation and predicts its resulting spectrum.</p>
+<p>The programs first calculates line EW values (with respect to continuum flux at 1215 Å) given a line intensity grid from Cloudy and <span class="math inline">\(\Phi\)</span> and <span class="math inline">\(n_H\)</span> parameter space, described by a shape (that is fit using the reversible jump MCMC). Then uses these EW values to create line ratios. The shape can have <span class="math inline">\(n&gt;3\)</span> vertices and occupy any region in the allowed parameter space (example shown in Figure 1).The RJMCMC fit boths the number of vertices, the position of the vertices in <span class="math inline">\(\Phi\)</span> and <span class="math inline">\(n_H\)</span> space, and the orientation of the BLR.</p>
+<figure>
+<img src="docs/polygon_image_for_docs.jpg" alt="Fig. 1 : Example of a shape and the grid points that fall within shape and that will be used in LOC-like summation to calculate line ratios." class="align-center" /><figcaption>Fig. 1 : Example of a shape and the grid points that fall within shape and that will be used in LOC-like summation to calculate line ratios.</figcaption>
+</figure>
+<p>In the LOC approach, the observed emission line spectrum is the sum of emission line contributions from a weighted distribution of 'clouds' with a range of gas densities at a range of radii. The resulting line strength is given as,</p>
+<p><span class="math display">\[L_{line} \propto \int_{r_{min}}^{r_{max}} \int_{n_{H,min}}^{n_{H,max}} W_{1215}(r,n_H) f(r) g(n_H) dn_H dr,\]</span></p>
+<p>where <span class="math inline">\(f(r) = r^{\Gamma}\)</span>, <span class="math inline">\(g(n_H) = n_H^{\beta}\)</span> are the weighting functions or 'covering fraction' of the various clouds (can be thought of as the an number density of clouds at radius <span class="math inline">\(r\)</span> and density <span class="math inline">\(n_H\)</span>), <span class="math inline">\(r_{ min}\)</span> and <span class="math inline">\(r_{ max}\)</span> are the minimum and maximum radii of the BLR, and <span class="math inline">\(n_{ H,min}\)</span> and <span class="math inline">\(n_{ H,max}\)</span> are the minimum and maximum cloud densities considered. <span class="math inline">\(W_{1215}\)</span> is the equivalent width of the line referenced to the incident continuum at 1215Å. This expression can be rewritten in term of <span class="math inline">\(\log \Phi_H\)</span> and <span class="math inline">\(\log n_H\)</span>.</p>
+<p><span class="math display">\[L_{line} \propto  \int_{\log \Phi_{H,min}}^{\log \Phi_{vmax}} \int_{\log n_{H,min}}^{\log n_{H,max}} W_{1215}(\log \Phi,\log n_H) 10^{(\beta+1)\log n_H-0.5(\Gamma+1)\log \Phi} d \log n_H d \log \Phi.\]</span></p>
+<p>and the <span class="math inline">\(EW_{line}\)</span> is given as</p>
+<p><span class="math display">\[EW_{line} \propto  \frac{ \int_{\log \Phi_{H,min}}^{\log \Phi_{vmax}} \int_{\log n_{H,min}}^{\log n_{H,max}} W_{1215}(\log \Phi,\log n_H) 10^{(\beta+1)\log n_H-0.5(\Gamma+1)\log \Phi} d \log n_H d \log \Phi }{ \int_{\log \Phi_{H,min}}^{\log \Phi_{vmax}} \int_{\log n_{ H,min}}^{\log n_{ H,max}} 10^{(\beta+1)\log n_H-0.5(\Gamma+1)\log \Phi} d \log n_H d \log \Phi }.\]</span></p>
+<p>In this analysis, instead of integrating between <span class="math inline">\(\log \Phi_{H,min}\)</span> &amp; <span class="math inline">\(\log \Phi_{H,max}\)</span>, and <span class="math inline">\(\log n_{H,min}\)</span> &amp; <span class="math inline">\(\log n_{H,max}\)</span>, we sum over the contributions within the prescribed shape, that is,</p>
+<p><span class="math display">\[EW_{line} \propto  \frac{\sum_i^N W_{1215}(\log \Phi_i,\log n_{H_i}) 10^{(\beta+1)\log n_{H_i}-0.5(\Gamma+1)\log \Phi_i} \Delta \log n_H \Delta \log \Phi}{\sum_i^N 10^{(\beta+1)\log n_{H_i}-0.5(\Gamma+1)\log \Phi_i} \Delta \log n_H \Delta \log \Phi}.\]</span></p>
+<p>where <em>i</em> is the <em>i</em>th grid point enclosed within the shape and <em>N</em> is the number of grid points enclosed by shape (See Figure 1 for illustration).</p>
+<p>It is common practice to adopt the a gas density distribution weighting function <span class="math inline">\(\beta = -1\)</span>, described in citet{Baldwin1995}, which roughly corresponds with the gas density distribution of fragmenting BLR clouds resulting from magnetohydrodynamic instabilities. For simplicity I also set <span class="math inline">\(\Gamma=-1\)</span>. Meaning that each grid point in log space is given equal weighting. These parameters can be altered in nubulous code.</p>
+<p>Line strength is highly dependent on the value of the integration limits. Therefore we can use the combination of observed ratios to constrain the integration parameter space.</p>
+<p>There are two cases that we can consider when summing over the <span class="math inline">\(\Phi_H\)</span> and <span class="math inline">\(n_H\)</span> parameter space defined by the shape: first we can sum over the total emissivity, or we can assume an inclination and define an observed emissivity given the contributions from the inward and outward emissivity of the cloud, such that,</p>
+<p><span class="math display">\[\epsilon_{\rm obs}(r,\theta) = \frac{\epsilon_{\rm in}(r)}{2}\left(1-\cos \theta\right)+ \frac{\epsilon_{\rm out}(r)}{2}\left(1+\cos \theta\right),\]</span></p>
+<p>where <span class="math inline">\(\epsilon_{\rm total}(r)=\epsilon_{\rm in}(r)+\epsilon_{\rm out}(r)\)</span>, <span class="math inline">\(\epsilon_{\rm in}(r)\)</span> is the emissivity of the inward cloud face (i.e. towards the ionising continuum source), and <span class="math inline">\(\epsilon_{\rm out}(r)\)</span> is the outward emissivity (i.e. away from the ionising continuum source). This equation can be rewritten in terms of the anisotropy distribution, <span class="math inline">\(F(r)=\epsilon_{\rm in}(r)/\epsilon_{\rm total}(r)\)</span> (shown for all lines in Figure ref{fig:aniso}),</p>
+<p><span class="math display">\[\epsilon_{\rm obs}(r,\theta) = \frac{\epsilon_{\rm total}(r)}{2}\left(1-[2F(r)-1]\cos \theta\right).\]</span></p>
+<p>An isotropically emitting cloud will have an anisotropy distribution of <span class="math inline">\(F(r)=0.5\)</span>, while <span class="math inline">\(F(r)=1\)</span> corresponds to a cloud that emits only towards the ionising continuum source, i.e. completely reflected. The anisotropic nature of each emitting cloud is highly dependent on the ionising parameter <span class="math inline">\(U_Hc=\Phi_H/n_H\)</span>. As shown in Figure ref{fig:aniso}, the Helium lines are emitted fairly isotropically across the whole parameter space except for a small section that is dominated by inward emission. The Hydrogen lines are generally isotropic for ionisation conditions, <span class="math inline">\(U_Hc&gt;10^{11}\)</span> and dominated by emission towards the ionising source below this limit. My investigations have suggested that inclination is required to achieve reasonable fits so it is fit along with the shape.</p>
+<h2 id="reversible-jump-mcmc-rjmcmc">Reversible Jump MCMC (RJMCMC)</h2>
+<p>As we do not know the shape or size of the best fit <span class="math inline">\(\Phi\)</span> and <span class="math inline">\(n_H\)</span> parameter space we chose to model it by a polygon, where the position and number of vertices is allowed to vary. This makes this a problem where the number of unknowns are unknown. We adopt a Bayesian approach to solve this problem, specifically we adopt the reversible jump Markov Chain Monte Carlo (RJMCMC) algorithm proposed by Green et al (1995). We follow a very similar approach to Luo et al. (2010) who used RJMCMC to constrain the shape of a gravity anomalous body.</p>
+<p>This inverse problem is typically non-linear and non-unique and it is possible that significantly different <span class="math inline">\(n_H-\Phi\)</span> parameter space regimes can fit the data equally well. We wish to obtain an <span class="math inline">\(n_H-\Phi\)</span> parameter space model that fits the data, and but we also want to measure the flexibility in the <span class="math inline">\(n_H-\Phi\)</span> parameter space that give reasonable results.</p>
+<p>We fit the shape of the polygon, the inclination of the system and the covering fraction (in cases where the continuum flux near 1215Å is included in the fit).</p>
+<p>Given a prior distribution of parameter values <span class="math inline">\(\pi(\theta)\)</span> and a likelihood of the observed data given the parameters <span class="math inline">\(\pi(y|\theta)\)</span> given by,</p>
+<p><span class="math display">\[\ln \pi(y|\theta) = -\frac{ 1 }{ 2 }\chi^2= -\frac{1}{2} \sum_{i=1}^{N}\frac{({\rm ratios}_{\rm real[i]}-{\rm ratios }_{\rm model[i]})^2}{{\sigma}_{\rm ratios[i]}^2}\]</span></p>
+<p>the distribution of the parameters <span class="math inline">\(\theta\)</span> conditional on the observations <span class="math inline">\(y\)</span>, the posterior distribution, is determined by Bayes theorem</p>
+<p><span class="math display">\[\pi(\theta|y) = \frac{\pi(y|\theta)\pi(\theta)}{\int \pi(y|\theta}\pi(\theta) d\theta)\]</span></p>
+<p>Markov chain Monte Carlo is a method that samples the posterior ... A Markov process is...balanced if the likelihood of the the transition from state <span class="math inline">\(s\)</span> to <span class="math inline">\(s&#39;\)</span> is as likely as from <span class="math inline">\(s&#39;\)</span> to <span class="math inline">\(s\)</span>, that is the transition is reversible. Or in more technical terms the transition rates between each pair of states <span class="math inline">\(s\)</span> and <span class="math inline">\(s&#39;\)</span> in the state space obey</p>
+<p><span class="math display">\[q(s,s&#39;)\pi(s) = q(s&#39;,s)\pi(s&#39;)\]</span></p>
+<p>where <span class="math inline">\(q(s,s&#39;)\)</span> is the Markov chain transition kernel, which is effectively the likelihood of moving to state <span class="math inline">\(s&#39;\)</span> given the present state. In our case, we do not know how many parameters should be used to specify our model. Let <span class="math inline">\(\left\{ \mathcal{M}_k\right\}\)</span> denote a collection of candidate models. Model <span class="math inline">\(\mathcal{M}_k\)</span> has a vector <span class="math inline">\(\theta_k\)</span> of unknown parameters <span class="math inline">\(\theta_k\in \mathds{R}^{n_k}\)</span>, where the dimension <span class="math inline">\(n_k\)</span> depends on the model. In our case, these unknown parameters are the coordinates of the polygon vertices(, the inclination and the covering fraction), therefore <span class="math inline">\(n_k = 2k(+3)\)</span>. Under a Bayesian framework, inference on the model and model parameters is carried out using the point posterior <span class="math inline">\(\pi(\theta,\mathcal{M}_K|Y)\)</span>.</p>
+<p>A detailed balanced is satisfied for a Markov chain if the proposed move from (<span class="math inline">\(\theta_i,\mathcal{M}_i\)</span>) to (<span class="math inline">\(\theta_i,\mathcal{M}_i\)</span>) is accepted with probability <span class="math inline">\(\alpha = min\left\{1,\alpha_{i\rightarrow j}(\theta_i,theta_j)\right\}\)</span> citep{Green1995}, where,</p>
+<p><span class="math display">\[\alpha_{i\rightarrow j}(\theta_i,\theta_j) = \frac{\pi(\theta_j,\mathcal{M}_j)r_{j\rightarrow i}(\theta_j)q_{j\rightarrow i}(\theta_j,\theta_i)}{\pi(\theta_i,\mathcal{M}_i)r_{i\rightarrow j}(\theta_i)q_{i\rightarrow j}(\theta_i,\theta_j)}\]</span></p>
+<p>where <span class="math inline">\(r_{i\rightarrow j}\)</span> is the probability that a proposed jump from model <span class="math inline">\(\mathcal{M}_i\)</span> to model <span class="math inline">\(\mathcal{M}_j\)</span> is attempted, and <span class="math inline">\(q_{i\rightarrow j}(\theta_i,\theta_j)\)</span> is the density from which the proposed parameter <span class="math inline">\(\theta_j\)</span> is drawn given <span class="math inline">\(\theta_i\)</span>. The joint posterior distribution of model <span class="math inline">\(\mathcal{M}_k\)</span> and its parameter <span class="math inline">\(\theta_k\)</span> is then,</p>
+<p><span class="math display">\[\pi(\mathcal{M}_k,\theta_k|y) = \frac{\pi(y|\mathcal{M}_k,\theta_k)\pi(\mathcal{M}_k,\theta_k)}{\sum_{i=1}^{m}\pi(\mathcal{M}_i)\int \pi(y|\mathcal{M}_i,\theta_i)\pi(\theta_i) d\theta_i}\]</span></p>
+<p>where <span class="math inline">\(m\)</span> is the number of competing models. When considering the transition form model <span class="math inline">\(\mathcal{M}_i\)</span> to model <span class="math inline">\(\mathcal{M}_j\)</span>, the ratio of posteriors can be further factored into a prior and likelihood ratio, i.e.,</p>
+<p><span class="math display">\[\frac{\pi(\mathcal{M}_j,\theta_j|y)}{\pi(\mathcal{M}_i,\theta_i|y)}= \frac{\pi(y|\mathcal{M}_j,\theta_j)}{\pi(y|\mathcal{M}_i,\theta_i)}\cdot\frac{\pi(\mathcal{M}_j,\theta_j)}{\pi(\mathcal{M}_i,\theta_i)}\]</span></p>
+<p>Thus the acceptance probability <span class="math inline">\(\alpha_{i\rightarrow j}(\theta_i,theta_j)\)</span> is factored into three ratios: the likelihood ratio, the prior ratio and the proposal ratio.</p>
+<h3 id="prior">Prior</h3>
+<p>We adopt the prior model proposed by citet{Luo1995}, which was adapted from citet{Pievatolo1998},</p>
+<p><span class="math display">\[\pi(\mathcal{M}_k,\theta_k) \propto \exp\left(-k^{\gamma}-\frac{1}{k}\sum_{i=1}^k\left[\phi_i(\theta_k)-\omega_k\right]^2\right), k\geq 3\]</span></p>
+<p>where <span class="math inline">\(\gamma\geq1\)</span> and penalises more complex models (i.e. models with a higher number of vertices), <span class="math inline">\(\phi_i(\omega_k)\)</span> is the angle in radians interior to the <span class="math inline">\(i\)</span>th vertex of polygon define by parameter <span class="math inline">\(\theta_k\)</span> and <span class="math inline">\(\omega_k = (k-2)\pi/k\)</span> and is the interior angle of a regular-sided polygon. Therefore this prior penalises more complex models with non-regular shapes. The prior does not impose any constraints on the length scale oand location of the polygon. However, we require that the polygon is contained in the limits of our Cloudy simulations: <span class="math inline">\(16\geq\log\Phi\geq24\)</span> and <span class="math inline">\(7\geq\log n_H\geq14\)</span>.</p>
+<p>We also require the lines of the polygon to not overlap, and put flat prior on covering fraction power law parameters between <span class="math inline">\(-10\geq\beta,\Gamma&lt;10\)</span>.</p>
+<h3 id="markov-chain-moves">Markov Chain moves</h3>
+<p>In RJMCMC there are three possible types of moves that are proposed in the Markov chain:</p>
+<p>1. Within-model move - a proposed move of one vertex to a nearby location. The shift is determined by drawing two random numbers for distance <span class="math inline">\(r\)</span> and direction <span class="math inline">\(\Theta\)</span>. It is difficult if not impossible to make truly random moves of vertices which always result in admissable polygons. To help occupancy levels of trial jumps, the step size of the random walk is restricted by a variance tied to the length of the intersecting sides of the polygon. The random distance <span class="math inline">\(r\)</span> is drawn from a normal distribution <span class="math inline">\(f_N(0,\sigma_a)\)</span> with a mean of zero and variance <span class="math inline">\(\sigma_a = min(d_i^-,d_i^+)c_a\)</span> where <span class="math inline">\(d_i^-\)</span> and <span class="math inline">\(d_i^+\)</span> are the lengths of the two polygon lines intersecting at chosen vertex and <span class="math inline">\(c_a\)</span> is a constant. We set <span class="math inline">\(c_a=0.25\)</span> to minimise self intersecting polygons. A within model move is simple a Metropolis Hastings move and the proposal density is</p>
+<p><span class="math display">\[q(\theta_k&#39;|\theta_k) = f_N(0,\sigma_a)\cdot(1/2\pi)\cdot r\]</span></p>
+<p>therefore,</p>
+<p><span class="math display">\[\frac{q(\theta_k|\theta_k&#39;)}{q(\theta_k&#39;|\theta_k)} = \frac{f_N(0,\sigma_a&#39;)}{f_N(0,\sigma_a)}\]</span></p>
+<ol start="2" type="1">
+<li>Birth move - proposed model change from <span class="math inline">\(\mathcal{M}_k\)</span> to <span class="math inline">\(\mathcal{M}_{k+1}\)</span>, allowable for <span class="math inline">\(k&lt;k_{\rm max}\)</span>. Split a randomly chosen side into two at the middle, and make a within-model move from the middle point. The birth and death moves are transmodel move and require a different method such as the reversible jump MCMC. The proposal ratio is</li>
+</ol>
+<p><span class="math display">\[\frac{q(\theta_k|\theta_k&#39;)}{q(\theta_k&#39;|\theta_k)}  = \frac{2\pi d_{k+1}kr}{b_k(k+1)f_n(r|0,\sigma_a)}\]</span></p>
+<p>where <span class="math inline">\(d_{k+1}=r_{k+1\rightarrow k}\)</span> is the probability of attempting a death move from <span class="math inline">\(\mathcal{M}_{k+1}\)</span> to <span class="math inline">\(\mathcal{M}_k\)</span> and <span class="math inline">\(b_k=r_{k\rightarrow k+1}\)</span> is the probabilty of attempting the birth move from <span class="math inline">\(\mathcal{M}_k\)</span> to <span class="math inline">\(\mathcal{M}_{k+1}\)</span>.</p>
+<ol start="3" type="1">
+<li>Death move - proposed model change from <span class="math inline">\(\mathcal{M}_k\)</span> to <span class="math inline">\(\mathcal{M}_{k-1}\)</span>, allowable for <span class="math inline">\(k&gt;3\)</span>. Delete a randomly chosen vertex and form a new side by joining the two neighbouring vertices. The proposal ratio for the death move is inverse of the birth move proposal ratio (equation shown above) and the radius <span class="math inline">\(r\)</span> in this case is the distance from the deleted vertex to the middle point of the new polygon side.</li>
+</ol>
+<p>A within model move is simple a Metropolis Hastings move, but the birth and death moves are transmodel move and require a different method such as the reversible jump MCMC.</p>
+<h3 id="acceptance-probability">Acceptance probability</h3>
+<p>The final acceptance probability for the MCMC chain is then</p>
+<p><span class="math display">\[\alpha_{\rm within-model} = \min\left\{1,\frac{\pi(\theta_j,\mathcal{M}_j)}{\pi(\theta_i,\mathcal{M}_i)}\frac{\pi(y|\theta_k&#39;,\mathcal{M}_k)}{\pi(y|\theta_k,\mathcal{M}_k)}\right\},\]</span></p>
+<p>for the within-model move,</p>
+<p><span class="math display">\[\alpha_{\rm birth~move} = \min\left\{1,\frac{\pi(\theta_{k+1},\mathcal{M}_{k+1})}{\pi(\theta_k,\mathcal{M}_k)}\frac{\pi(y|\theta_{k+1},\mathcal{M}_{k+1})}{\pi(y|\theta_k,\mathcal{M}_k)}\frac{2\pi d_{k+1}kr}{b_k(k+1)f_n(r|0,\sigma_a)}\right\},\]</span></p>
+<p>for the birth move and</p>
+<p><span class="math display">\[\alpha_{\rm death~move} = \min\left\{1,\frac{\pi(\theta_k,\mathcal{M}_k)}{\pi(\theta_{k+1},\mathcal{M}_{k+1})}\frac{\pi(y|\theta_k,\mathcal{M}_k)}{\pi(y|\theta_{k+1},\mathcal{M}_{k+1})}\frac{b_k(k+1)f_n(r|0,\sigma_a)}{2\pi d_{k+1}kr}\right\},\]</span></p>
+<p>for the death move.</p>
+<p>The probability of a within-model move is <span class="math inline">\(w_k= 1-(b_k+d_k)\)</span> and we have chosen <span class="math inline">\(b_k=d_{k+1}=d_k=0.1\)</span> and <span class="math inline">\(w_k=0.8\)</span> for our investigations except in the case where <span class="math inline">\(k=3\)</span>, then <span class="math inline">\(b_k=0.1\)</span>, <span class="math inline">\(d_{k}=0\)</span>, <span class="math inline">\(w_k =0.90\)</span> and <span class="math inline">\(d_{k+1}=0.1\)</span>.</p>
+<h3 id="priors">Priors</h3>
+<dl>
+<dt>The priors <span class="math inline">\(\pi(\theta)\)</span> include:</dt>
+<dd><ul>
+<li>Flat prior on the extent of the vertices that restricts them with the <span class="math inline">\(\phi\)</span> and <span class="math inline">\(n_H\)</span> parameter space. The prior does not impose any constraints on the length scale and location of the polygon. However, we require that the polygon is contained in the limits of our Cloudy simulations: <span class="math inline">\(16\geq\log\Phi\geq24\)</span> and <span class="math inline">\(7\geq\log n_H\geq14\)</span>.</li>
+<li>Prior against duplicate near neighbour vertices.</li>
+<li>Flat prior on inclination angle betweeo <span class="math inline">\(0&lt;\theta&lt;\pi\)</span>.</li>
+<li>Flat prior on covering fraction between <span class="math inline">\(0&lt;cf&lt;0.5\)</span> (when applicable).</li>
+<li><p>Prior on the polygon shape. We adapt the prior model similar to that proposed by Pievatolo &amp; Green (1998),</p>
+<p><span class="math display">\[\pi(\mathcal{M}_k,\theta_k) \propto \exp(-\alpha k^{\gamma}-\frac{\beta}{k}\sum_{i=1}^k[\phi_i(\theta_k)-\omega_k]^2), k\geq 3\]</span></p>
+<p>where <span class="math inline">\(\gamma\geq1\)</span> and penalises more complex models (i.e. models with a higher number of vertices), <span class="math inline">\(\phi_i(\omega_k)\)</span> is the angle in radians interior to the i-th vertex of polygon define by parameter <span class="math inline">\(\theta_k\)</span> and <span class="math inline">\(\omega_k = (k-2)\pi/k\)</span> and is the interior angle of a regular-sided polygon. Therefore this prior penalises more complex models with non-regular shapes. <span class="math inline">\(\gamma\)</span>, <span class="math inline">\(\alpha\)</span> and <span class="math inline">\(\beta\)</span> can be altered depending if you want to penalise more vertices or irregular shapes. Defaults are <span class="math inline">\(\gamma=1.6\)</span>, <span class="math inline">\(\alpha=10\)</span> and <span class="math inline">\(\beta = 1\)</span>.</p></li>
+</ul>
+</dd>
+</dl>
+<h1 id="changelog">Changelog</h1>
+<p>Please send an email to <code>anthea.king AT uqconnect.edu.au</code> if you have any questions.</p>
+<blockquote>
+<p><em>Version 1.0</em> Initial Release</p>
+</blockquote>
+<h1 id="install-nebulous">Install Nebulous</h1>
+<h2 id="prerequisites">Prerequisites</h2>
+<p>Nebulous requires:</p>
+<ol type="1">
+<li><a href="http://python.org">Python</a> (&gt;2.7)</li>
+<li><a href="http://numpy.org">Numpy</a></li>
+<li><a href="http://scipy.org">Scipy</a></li>
+<li><a href="http://matplotlib.sourceforge.net/">Matplotlib</a></li>
+<li><a href="https://github.com/Toblerity/Shapely">Shapely</a></li>
+<li><a href="https://pandas.pydata.org/">Pandas</a></li>
+<li><a href="https://tqdm.github.io/">tqdm</a></li>
+</ol>
+<h2 id="installation">Installation</h2>
+<p>To download the package, you can either go to the <code>Downloads</code> tab for stable releases or directly pull the cutting-edge version using <code>mercurial</code>. We strongly suggest you clone the repo for the latest version, as we are updating the package on a regular basis.</p>
+<p>You can install Nebulous by the standard Python package installation procedure:</p>
+<pre><code>$ python setup.py  install</code></pre>
+<p>or if you want to install the package to a specified directory <code>NEBULOUSDIR</code>:</p>
+<pre><code>$ python setup.py install --prefix=NEBULOUSDIR</code></pre>
+<h2 id="test-installation">Test Installation</h2>
+<p>After installing JAVELIN, navigate into the <code>examples</code> directory:</p>
+<pre><code>$ cd Nebulous/examples/</code></pre>
+<p>you can try:</p>
+<pre><code>$ python createFakeData.py</code></pre>
+<p>to make sure the code works (i.e., no error's reported). This should create a text document <code>FakeData.txt</code> containing line fluxes for several lines and their associated errors (calculated to be 1% of the line flux in this setup) and this file can be used as input to <code>RJMCMC_code_test.py</code> (See <em>Reading Line Fluxes</em> section for more details). It will also save a pickle file that contains the coordinates of the test shape used to create the line fluxes given in <code>FakeData.txt</code>.</p>
+<h1 id="usage">Usage</h1>
+<p>Here is the canonical example of building an approximately circular patch by buffering a point:</p>
+<pre><code>&gt;&gt;&gt; import nebulous</code></pre>
+<p>direct input:</p>
+<pre><code>&gt;&gt;&gt; lineList =[&#39;H  1  6563A&#39;, &#39;H  1  4340A&#39;, &#39;HE 2  4686A&#39;, &#39;HE 1  5876A&#39;]
+&gt;&gt;&gt; lineFlux = [1.662,5.488,0.193,2.749]
+&gt;&gt;&gt; lineFluxErr = [0.017,0.055,0.002,0.027]</code></pre>
+<p>alternatively you can grab line fluxes from file (see <em>Reading Line Fluxes</em> for more detail):</p>
+<pre><code>&gt;&gt;&gt; import pandas as pd
+&gt;&gt;&gt; df = pd.read_csv(args.fileName,delimiter=&#39;\t&#39;)
+&gt;&gt;&gt; linelabels = df.columns
+&gt;&gt;&gt; flux={}
+&gt;&gt;&gt; flux_err={}
+&gt;&gt;&gt; for line in linelabels:
+&gt;&gt;&gt;     flux[line] =df[line][0]
+&gt;&gt;&gt;     flux_err[line] =df[line][1]</code></pre>
+<p>to set up RJMCMC object:</p>
+<pre><code>&gt;&gt;&gt; RJMCMCobject = nebulous.RJMCMC(ratio_data=ratio_data,ratio_data_err=ratio_err_data,linelist=linelabels)</code></pre>
+<p>specify details of Cloudy input (see below for more detail):</p>
+<pre><code>&gt;&gt;&gt; RJMCMCobject.loadEQWGrid(sim = sim,gridPhiSize = gridPhiSize,gridHdenSize = gridHdenSize,ext = ext,dphi =dphi,dnh=dnh,phi=phi,hden=hden )</code></pre>
+<p>Run fit:</p>
+<pre><code>&gt;&gt;&gt; RJMCMCobject.doRJMCMC(n_iterations = n_steps)</code></pre>
+<p>For comprehensive usage snippets see the RJMCMC_code_general.py and RJMCMC_code_test.py examples.</p>
+<h2 id="reading-line-fluxes">Reading Line Fluxes</h2>
+<p>Expected input file for given example is a 3-row, n-column data file like <code>ExampleData.txt</code> in the example directory, where n is the number of lines under consideration. If you do,:</p>
+<pre><code>$ head ExampleData.txt</code></pre>
+<p>The output will look like:</p>
+<pre><code>H  1  6563A    H  1  4340A HE 2  4686A HE 1  5876A H  1  4861A H  1  1216A
+1.66196707692  5.48762461538   0.19259648  2.74931323077   11.2445938462   150.956923077
+0.0166196707692    0.0548762461538 0.0019259648    0.0274931323077 0.112445938462  1.50956923077</code></pre>
+<p>where the 1st, 2nd, and 3rd rows are <em>the line name</em>, <em>the line flux value</em>, and <em>the flux measurement uncertainty</em>, respectively.</p>
+<h2 id="reading-cloudy-tables">Reading Cloudy Tables</h2>
+<p>Nebulous required input from Cloudy grid tables. Cloudy is a well-established and extensive spectral synthesis code designed to simulate realistic physical condition inside gas clouds (Ferland et al. 2013). An example Cloudy input file for such a grid is:</p>
+<pre><code>set save prefix &quot;gridbasic_3solar_grain&quot;
+table agn // built-in power law continuum
+phi(H) 20 vary
+grid 16 24 0.25
+hden 10 vary //log of hydrogen density in cm^-3
+grid 7 14 0.25
+stop column density 23 // constant hydrogen column density of 10^23 cm^-2
+c atom feii 371
+metals 3 linear
+grains function sublimation
+background, z=0.1
+turbulence 100km/s
+iterate to convergence
+atom H-like element hydrogen levels resolved 18
+atom He-like element helium levels resolved 15
+atom H-like element helium levels resolved 15
+normalize to &quot;Inci&quot; 1215 scale factor = 1215
+save last linelist &quot;.lin&quot; &quot;LineList.dat&quot; no hash //absolute
+save last linelist &quot;.line&quot; &quot;LineList.dat&quot; no hash emergent //absolute</code></pre>
+<p>In this example, a supersolar abundance (<span class="math inline">\(3Z_{\odot}\)</span>) is chosen, and a constant column density of <span class="math inline">\(10^{23}\)</span> cm<span class="math inline">\(^{-2}\)</span>. This column density value was inferred by Marconi et al. (2008) using radiation pressure estimates from single epoch black hole mass estimates and reverberation mapping mass estimates. The standard Cloudy's AGN continuum SED is used, which is modelled off the AGN SED inferred by Mathews et al. (1987), with the addition of a sub-millimetre break at 10 microns. This continuum is based on a typical observed SED shape for radio quiet AGN. To simulate the range of cloud properties, a grid of hydrogen number density values (<span class="math inline">\(7 \leq \log n_H \leq 14\)</span>) and hydrogen ionising flux values (<span class="math inline">\(16 \leq \log \Phi_H \leq 24\)</span>) were investigated. It also assumed that grains were present in BLR, when flux and density conditions allow the grains to have formed and survived. It includes 100km/s turbulance in the cloud gas and cosmic background radiation incident on the cloud, appropriate for an object at a redhift of 0.1.</p>
+<p>Cloudy outputs the line intensities for the individual clouds in terms of the incident flux at 1215Å, <span class="math inline">\(W_{1215}\)</span>. This represents the relative emissivity of the line, that is, a measure of the efficiency by which ionising continuum photons are converted into line photons.</p>
+<p>The emergent output looks like:</p>
+<pre><code>$ head -n 3 grid_3solar_turb.line</code></pre>
+<p>to show the first 3 rows of the cloudy output file <code>grid_3solar_turb.line</code>:</p>
+<pre><code>#lineslist  H  1  4340A H  1  4861A H  1  6563A HE 1  4471A HE 1  4922A HE 1  5016A HE 1      5876A HE 1  6678A HE 1  7065A HE 2  1640A HE 2  4686A INWD  4686A INCI  1215A H  1  1216A INWD  1216A HE 2  1215A TOTL  1218A N  5  1239A N  5  1243A TOTL  1240A S  2  1256A SI 2  1263A 6LEV  1304A SI 2  1308A C  2  1335A TOTL  1397A TOTL  1402A TOTL  1406A C  4  1548A C  4  1551A TOTL  1549A INWD  1549A AL 3  1855A AL 3  1863A TOTL  1860A INWD  1860A TOTL  1888A TOTL  1909A SI 3  1883A INWD  1892A INWD  1910A TOTL  2326A MG 2  2796A MG 2  2803A TOTL  2798A INWD  2798A HE 2  3203A HE 1  3889A H  1  4102A H  1  4340A INWD  4340A H  1  4861A INWD  4861A HE 1  5876A INWD  5876A INWD  6563A FE 2  6200A FE 2  4300A FE 2  2400A FE 2  1080A FE 2  1500A FE 2 1.150m FE 2  2500A FE 2  2300A FE 2  8900A FE 2  1216A FE2C     0  O  3  5007A
+iteration 5 2.1233e+01  4.4658e+01  1.2614e+02  1.3250e+00  3.4699e-01  6.4632e-01  4.0041e+00  1.0611e+00  1.6066e+00  6.6704e+01  5.8100e+00  2.9059e+00  1.2150e+03  1.6061e+03  1.5817e+03  2.1963e+01  7.2797e+00  3.2187e+01  1.7071e+01  4.9259e+01  1.9119e-02  1.0423e+00  5.4650e-02  2.2416e+00  5.2318e+01  1.7460e+02  1.3597e+01  4.9263e+00  2.8467e+02  1.4324e+02  4.2916e+02  0.0000e+00  1.8190e+01  9.2210e+00  2.7817e+01  2.7729e+01  2.7755e+01  1.6802e+02  1.0333e-01  2.7422e+01  1.6537e+02  3.7226e+00  1.5739e+02  8.0401e+01  2.3789e+02  2.2662e+02  2.8151e+00  4.8953e+00  1.2394e+01  2.1233e+01  1.0620e+01  4.4658e+01  2.2340e+01  4.0041e+00  2.0030e+00  6.3274e+01  3.9681e+00  1.5309e+01  1.7168e+02  5.9401e-03  1.7322e+00  5.9532e-01  4.9573e+00  2.7142e+00  1.4182e+00  1.7753e+01  0.0000e+00  1.0956e+02
+iteration 6 2.1363e+01  4.4941e+01  1.2752e+02  1.3350e+00  3.5305e-01  6.6727e-01  4.1420e+00  1.0986e+00  1.7103e+00  6.5608e+01  5.8529e+00  2.9278e+00  1.2150e+03  1.6509e+03  1.6189e+03  2.2589e+01  4.0481e+00  1.5299e+01  8.1166e+00  2.3417e+01  2.9789e-02  1.5639e+00  5.7413e-02  2.9067e+00  5.9416e+01  1.6887e+02  1.2904e+01  5.4416e+00  2.8251e+02  1.4237e+02  4.2576e+02  0.0000e+00  1.6984e+01  8.6245e+00  2.5864e+01  2.5765e+01  4.5016e+01  2.0032e+02  9.4780e-02  4.4455e+01  1.9571e+02  5.9949e+00  1.7685e+02  9.0079e+01  2.6703e+02  2.5491e+02  2.8474e+00  4.6293e+00  1.2462e+01  2.1363e+01  1.0686e+01  4.4941e+01  2.2484e+01  4.1420e+00  2.0730e+00  6.3950e+01  3.0451e+00  1.5792e+01  1.7687e+02  5.7149e-03  1.1684e+00  4.8156e-01  3.6227e+00  1.9809e+00  1.0297e+00  1.2753e+01  0.0000e+00  6.5673e+01</code></pre>
+<p>where the 1st column is <em>the name of the lines</em>, and the following columns give <em>the emergent line intensities relative to the incident flux at 1215Å</em> for different values of hydrogen incident flux phi(H) and hydrogen density hden.</p>
+<p>In this example the <span class="math inline">\(\log_{10}\)</span> phi(H) values are varied between 16 and 24 with intervals 0.25. Similarly <span class="math inline">\(\log_{10}\)</span> hden values are varied between 7 and 14 with intervals 0.25. Therefore Nebulous loadEQWGrid function inputs are</p>
+<ul>
+<li>sim = &quot;grid_3solar_turb&quot;,</li>
+<li>gridPhiSize = 33,</li>
+<li>gridHdenSize = 27,</li>
+<li>ext = &quot;line&quot;,</li>
+<li>dphi =0.25,</li>
+<li>dnh=0.25,</li>
+<li>phi=np.arange(16,24.0001,0.25),</li>
+<li>hden=np.arange(7,14.0001,0.25).</li>
+</ul>
+<h1 id="additional-information">Additional Information</h1>
+<p>Please refer to the Nebulous source code for all the modules and their arguments (the code is semi-well-documented).</p>
+<h1 id="citation">Citation</h1>
+<p>You are welcome to use and modify Nebulous, however please acknowledge its use either as is or with modifications with a citation to,</p>
+<p>DOI: 10.5281/zenodo.1326245</p>
+</body>
+</html>

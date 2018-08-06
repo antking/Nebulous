@@ -37,7 +37,7 @@ and the :math:`EW_{line}` is given as
 
 In this analysis, instead of integrating between :math:`\log \Phi_{H,min}` & :math:`\log \Phi_{H,max}`, and :math:`\log n_{H,min}` & :math:`\log n_{H,max}`, we sum over the contributions within the prescribed shape, that is,
 
-.. math:: EW_{line} \propto  \frac{\sum_i^N W_{1215}(\log \Phi_i,\log n_H_i) 10^{(\beta+1)\log n_H_i-0.5(\Gamma+1)\log \Phi_i} \Delta \log n_H \Delta \log \Phi}{\sum_i^N 10^{(\beta+1)\log n_H_i-0.5(\Gamma+1)\log \Phi_i} \Delta \log n_H \Delta \log \Phi}.
+.. math:: EW_{line} \propto  \frac{\sum_i^N W_{1215}(\log \Phi_i,\log n_{H_i}) 10^{(\beta+1)\log n_{H_i}-0.5(\Gamma+1)\log \Phi_i} \Delta \log n_H \Delta \log \Phi}{\sum_i^N 10^{(\beta+1)\log n_{H_i}-0.5(\Gamma+1)\log \Phi_i} \Delta \log n_H \Delta \log \Phi}.
 
 where *i* is the *i*th grid point enclosed within the shape and *N* is the number of grid points enclosed by shape (See Figure 1 for illustration).
 
